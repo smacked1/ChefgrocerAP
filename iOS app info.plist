@@ -1,0 +1,133 @@
+diff --git a/ios/App/App/Info.plist b/ios/App/App/Info.plist
+index 1234567..89abcde 100644
+--- a/ios/App/App/Info.plist
++++ b/ios/App/App/Info.plist
+@@
+  <dict>
++   <key>NSCameraUsageDescription</key>
++   <string>ChefGrocer uses your camera to scan barcodes for grocery items.</string>
++
++   <key>NSLocationWhenInUseUsageDescription</key>
++   <string>ChefGrocer uses your location to find nearby grocery stores and price comparisons.</string>
++
++   <key>NSMicrophoneUsageDescription</key>
++   <string>ChefGrocer uses your microphone to let you talk to the AI Chef hands-free.</string>
++
++   <key>NSPhotoLibraryUsageDescription</key>
++   <string>ChefGrocer lets you upload food photos to improve recipe suggestions.</string>
+
+diff --git a/src/components/LegalLinks.tsx b/src/components/LegalLinks.tsx
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/components/LegalLinks.tsx
+@@
++import React from 'react';
++
++export function LegalLinks() {
++  return (
++    <div style={{ padding: 10, fontSize: 12, textAlign: 'center' }}>
++      <a href="https://yourdomain.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> |{" "}
++      <a href="https://yourdomain.com/terms" target="_blank" rel="noopener noreferrer">Terms of Use</a>
++    </div>
++  );
++}
+
+diff --git a/src/hooks/useIAP.ts b/src/hooks/useIAP.ts
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/src/hooks/useIAP.ts
+@@
++import { useEffect, useState } from 'react';
++import { InAppPurchases } from '@capacitor/in-app-purchases';
++
++const productIds = ['premium_monthly', 'pro_monthly', 'lifetime_access'];
++
++export function useIAP() {
++  const [products, setProducts] = useState<any[]>([]);
++  const [purchased, setPurchased] = useState<Record<string, boolean>>({});
++
++  useEffect(() => {
++    async function initIAP() {
++      await InAppPurchases.initialize();
++      const { products } = await InAppPurchases.getProducts({ productIds });
++      setProducts(products);
++
++      const restored = await InAppPurchases.restorePurchases();
++      restored.purchases.forEach(p => setPurchased((prev) => ({ ...prev, [p.productId]: true })));
++    }
++    initIAP();
++
++    InAppPurchases.addListener('purchaseCompleted', (purchase) => {
++      setPurchased((prev) => ({ ...prev, [purchase.productId]: true }));
++      // TODO: Add server-side receipt validation here
++    });
++
++    return () => {
++      InAppPurchases.removeAllListeners();
++    };
++  }, []);
++
++  async function buy(productId: string) {
++    await InAppPurchases.purchase({ productId });
++  }
++
++  async function restore() {
++    const res = await InAppPurchases.restorePurchases();
++    res.purchases.forEach(p => setPurchased((prev) => ({ ...prev, [p.productId]: true })));
++  }
++
++  return { products, purchased, buy, restore };
++}
+
+diff --git a/src/screens/SubscriptionScreen.tsx b/src/screens/SubscriptionScreen.tsx
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/src/screens/SubscriptionScreen.tsx
+@@
++import React from 'react';
++import { useIAP } from '../hooks/useIAP';
++
++export function SubscriptionScreen() {
++  const { products, purchased, buy, restore } = useIAP();
++
++  return (
++    <div style={{ padding: 20 }}>
++      <h2>Upgrade Your ChefGrocer</h2>
++      {products.length === 0 && <p>Loading products...</p>}
++      {products.map(p => (
++        <div key={p.productId} style={{ marginBottom: 10 }}>
++          <h3>{p.title} — {p.price}</h3>
++          <button disabled={purchased[p.productId]} onClick={() => buy(p.productId)}>
++            {purchased[p.productId] ? "Purchased" : "Buy"}
++          </button>
++        </div>
++      ))}
++      <button onClick={restore} style={{ marginTop: 20 }}>Restore Purchases</button>
++    </div>
++  );
++}
+
+diff --git a/README.md b/README.md
+index abcdef0..4444444 100644
+--- a/README.md
++++ b/README.md
+@@
++# iOS Build & Apple In-App Purchase Setup
++
++1. Install Capacitor IAP plugin:
++   ```bash
++   npm install @capacitor/in-app-purchases
++   npx cap sync ios
++   ```
++
++2. Add your Apple IAP products (premium_monthly, pro_monthly, lifetime_access) in App Store Connect.
++
++3. Add permission strings to `ios/App/App/Info.plist`.
++
++4. Use the `SubscriptionScreen` to show products and handle purchases.
++
++5. Test on physical iOS devices before submitting to App Store.
++
