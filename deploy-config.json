@@ -1,0 +1,62 @@
+{
+  "platforms": {
+    "replit": {
+      "status": "ready",
+      "url": "TBD",
+      "features": ["pwa", "payments", "voice", "ai"],
+      "deployment_time": "5_minutes"
+    },
+    "netlify": {
+      "build_command": "npm run build",
+      "publish_directory": "dist",
+      "functions_directory": "server",
+      "environment": ["VITE_STRIPE_PUBLIC_KEY", "STRIPE_SECRET_KEY", "GEMINI_API_KEY"]
+    },
+    "vercel": {
+      "framework": "vite",
+      "build_command": "npm run build",
+      "output_directory": "dist",
+      "serverless_functions": true
+    },
+    "firebase": {
+      "hosting": {
+        "public": "dist",
+        "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+        "rewrites": [
+          {
+            "source": "/api/**",
+            "function": "api"
+          },
+          {
+            "source": "**",
+            "destination": "/index.html"
+          }
+        ]
+      }
+    }
+  },
+  "pwa_stores": {
+    "chrome_web_store": {
+      "category": "lifestyle",
+      "keywords": ["cooking", "ai", "recipes", "meal planning", "voice assistant"],
+      "submission_time": "1-3_days"
+    },
+    "microsoft_store": {
+      "platform": "windows",
+      "pwa_supported": true,
+      "submission_time": "1-7_days"
+    }
+  },
+  "revenue_channels": {
+    "subscriptions": {
+      "premium": "$4.99/month",
+      "pro": "$9.99/month", 
+      "lifetime": "$49.99"
+    },
+    "affiliates": {
+      "grocery_delivery": "5-15%",
+      "kitchen_equipment": "3-8%",
+      "meal_kits": "$10-25_per_signup"
+    }
+  }
+}
